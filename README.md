@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # cen3031_group9_fitness_app
 This is a group project for CEN3031 Section 10685 Fall 2026. Temporary repo name.
 
@@ -7,9 +8,17 @@ This is a group project for CEN3031 Section 10685 Fall 2026. Temporary repo name
 	Nishita Muthyalagari
 =======
 # Welcome to your Expo app 👋
+=======
+# cen3031_group9_fitness_app
+This is a group project for CEN3031 Section 10685 Fall 2026. Temporary repo name.
+>>>>>>> 94c72b2 (combine readmes)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+    Ivan Koshkin
+	Taj Miller
+	Nishita Muthyalagari
 
+
+# Expo Useful Template Readme:
 ## Get started
 
 1. Install dependencies
@@ -42,6 +51,7 @@ npm run reset-project
 ```
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+<<<<<<< HEAD
 
 ### Other setup steps
 
@@ -63,3 +73,5 @@ Join our community of developers creating universal apps.
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
 >>>>>>> 8d7794b (Initial commit)
+=======
+>>>>>>> 94c72b2 (combine readmes)
