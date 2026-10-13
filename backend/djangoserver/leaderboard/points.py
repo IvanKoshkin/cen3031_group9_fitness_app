@@ -4,7 +4,8 @@ Points are always calculated here, on the server, so a client can never send
 its own point value. This is the mitigation for the fake-workout risk.
 """
 
-# Points earned per minute, by exercise category.
+# Points earned per minute, by exercise category. These are the seven
+# categories used by Free Exercise DB, the dataset we seed the library from.
 CATEGORY_RATE = {
     "strength": 1.0,
     "cardio": 1.2,
@@ -12,9 +13,17 @@ CATEGORY_RATE = {
     "plyometrics": 1.2,
     "strongman": 1.1,
     "powerlifting": 1.1,
-    "olympic_weightlifting": 1.2,
+    "olympic weightlifting": 1.2,
 }
 DEFAULT_RATE = 1.0
+
+
+def normalize_category(category):
+    """The dataset writes 'olympic weightlifting'; code often writes it with
+    an underscore. Accept either, and ignore case and surrounding spaces."""
+    if not category:
+        return ""
+    return category.strip().lower().replace("_", " ")
 
 INTENSITY_MULTIPLIER = {
     "light": 0.8,
@@ -34,7 +43,7 @@ def points_for(category, minutes, intensity="moderate"):
     if intensity not in INTENSITY_MULTIPLIER:
         raise ValueError(f"unknown intensity: {intensity}")
 
-    rate = CATEGORY_RATE.get(category, DEFAULT_RATE)
+    rate = CATEGORY_RATE.get(normalize_category(category), DEFAULT_RATE)
     return round(rate * minutes * INTENSITY_MULTIPLIER[intensity])
 
 

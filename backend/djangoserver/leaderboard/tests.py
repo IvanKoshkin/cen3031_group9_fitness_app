@@ -21,6 +21,16 @@ class PointsForTests(TestCase):
     def test_unknown_category_uses_the_default_rate(self):
         self.assertEqual(points_for("yoga", 60), 60)
 
+    def test_olympic_weightlifting_matches_the_dataset_spelling(self):
+        # Free Exercise DB writes this category with a space, not an underscore.
+        with_space = points_for("olympic weightlifting", 60)
+        with_underscore = points_for("olympic_weightlifting", 60)
+        self.assertEqual(with_space, 72)
+        self.assertEqual(with_space, with_underscore)
+
+    def test_category_matching_ignores_case_and_spacing(self):
+        self.assertEqual(points_for("  Cardio ", 30), points_for("cardio", 30))
+
     def test_too_short_or_too_long_is_rejected(self):
         with self.assertRaises(ValueError):
             points_for("cardio", 2)
