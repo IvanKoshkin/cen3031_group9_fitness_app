@@ -132,6 +132,17 @@ class WorkoutLogTests(TestCase):
         with self.assertRaises(ValidationError):
             self.log(performed_on=start_of_current_week(self.today) - timedelta(days=1))
 
+    def test_an_admin_can_clear_a_flag_on_last_weeks_workout(self):
+        workout = self.log(minutes=150)
+        last_week = start_of_current_week(self.today) - timedelta(days=3)
+        WorkoutLog.objects.filter(pk=workout.pk).update(performed_on=last_week)
+        workout.refresh_from_db()
+        workout.flagged = False
+        workout.full_clean()  # what the admin form runs before saving
+        workout.save()
+        workout.refresh_from_db()
+        self.assertFalse(workout.flagged)
+
     def test_an_earlier_day_this_week_is_allowed(self):
         workout = self.log(performed_on=start_of_current_week(self.today))
         self.assertEqual(workout.points_awarded, 36)

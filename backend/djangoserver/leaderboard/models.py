@@ -72,9 +72,12 @@ class WorkoutLog(models.Model):
         return points_for(self.exercise.category, self.minutes, self.intensity)
 
     def clean(self):
-        """Workouts can be backdated, but only within the current week."""
+        """Students can only log workouts for days in the current week. That stops
+        someone logging a workout from three weeks ago to pad their score."""
         super().clean()
-        if self.performed_on is None:
+        # Skip this check when an admin edits a workout that already exists, so
+        # last week's flagged workouts can still be reviewed.
+        if not self._state.adding or self.performed_on is None:
             return
         today = timezone.localdate()
         if self.performed_on > today:
