@@ -3,6 +3,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, fontSize, spacing } from "@/constants/theme";
 
+import ItemList from "../../components/ExerciseList";
+
 // Placeholder for the Dashboard (Screen 3 in the design doc).
 // Whoever owns the dashboard can replace this file.
 
@@ -11,7 +13,9 @@ export default function Home() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <Text style={styles.title}>Dashboard</Text>
+        <ItemList />
         <Text style={styles.body}>Coming soon: your points, rank, and a Log Workout button.</Text>
+        
       </View>
     </SafeAreaView>
   );
