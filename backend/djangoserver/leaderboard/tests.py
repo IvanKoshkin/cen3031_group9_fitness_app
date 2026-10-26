@@ -6,6 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from .models import Exercise, WorkoutLog, start_of_current_week
+from .standings import weekly_standings
 from .points import (
     DAILY_POINT_CAP,
     award_points,
@@ -152,3 +153,99 @@ class ExerciseCategoryTests(TestCase):
     def test_category_is_stored_in_the_canonical_spelling(self):
         lift = Exercise.objects.create(exercise_name="Snatch", category="Olympic_Weightlifting")
         self.assertEqual(lift.category, "olympic weightlifting")
+
+
+class WeeklyStandingsTests(TestCase):
+    def setUp(self):
+        users = get_user_model().objects
+        self.ana = users.create_user("ana", password="pw-for-tests")
+        self.ben = users.create_user("ben", password="pw-for-tests")
+        self.cal = users.create_user("cal", password="pw-for-tests")
+        self.run = Exercise.objects.create(exercise_name="Running", category="cardio")
+        self.today = timezone.localdate()
+
+    def log(self, user, minutes):
+        # cardio at moderate intensity: 30 min = 36 pts, 60 min = 72 pts
+        return WorkoutLog.objects.create(
+            user=user, exercise=self.run, minutes=minutes, performed_on=self.today
+        )
+
+    def test_highest_points_come_first(self):
+        self.log(self.ana, 30)
+        self.log(self.ben, 60)
+        names = [row["username"] for row in weekly_standings(self.today)]
+        self.assertEqual(names, ["ben", "ana"])
+
+    def test_a_users_workouts_are_added_together(self):
+        self.log(self.ana, 30)
+        self.log(self.ana, 30)
+        self.assertEqual(weekly_standings(self.today)[0]["points"], 72)
+
+    def test_tied_users_share_a_rank_and_the_next_rank_is_skipped(self):
+        self.log(self.ana, 60)
+        self.log(self.ben, 60)
+        self.log(self.cal, 30)
+        ranks = [(row["username"], row["rank"]) for row in weekly_standings(self.today)]
+        self.assertEqual(ranks, [("ana", 1), ("ben", 1), ("cal", 3)])
+
+    def test_last_weeks_workouts_dont_count(self):
+        old = self.log(self.ana, 60)
+        last_week = start_of_current_week(self.today) - timedelta(days=1)
+        WorkoutLog.objects.filter(pk=old.pk).update(performed_on=last_week)
+        self.log(self.ben, 30)
+        names = [row["username"] for row in weekly_standings(self.today)]
+        self.assertEqual(names, ["ben"])
+
+    def test_flagged_workouts_dont_count(self):
+        self.log(self.ana, 150)  # over the long-workout limit, so it gets flagged
+        self.log(self.ben, 30)
+        names = [row["username"] for row in weekly_standings(self.today)]
+        self.assertEqual(names, ["ben"])
+
+    def test_no_workouts_means_an_empty_leaderboard(self):
+        self.assertEqual(weekly_standings(self.today), [])
+
+    def test_each_users_workout_count_is_included(self):
+        self.log(self.ana, 30)
+        self.log(self.ana, 30)
+        self.assertEqual(weekly_standings(self.today)[0]["workouts"], 2)
+
+    def test_a_workout_dated_in_the_future_doesnt_count_yet(self):
+        # only an admin edit can set this, since new logs reject future dates
+        workout = self.log(self.ana, 60)
+        tomorrow = self.today + timedelta(days=1)
+        WorkoutLog.objects.filter(pk=workout.pk).update(performed_on=tomorrow)
+        self.assertEqual(weekly_standings(self.today), [])
+
+
+class WeeklyLeaderboardEndpointTests(TestCase):
+    def setUp(self):
+        self.ana = get_user_model().objects.create_user("ana", password="pw-for-tests")
+        run = Exercise.objects.create(exercise_name="Running", category="cardio")
+        WorkoutLog.objects.create(
+            user=self.ana, exercise=run, minutes=30, performed_on=timezone.localdate()
+        )
+
+    def test_returns_the_shape_the_frontend_expects(self):
+        response = self.client.get("/leaderboard/weekly/")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["weekStart"], start_of_current_week().isoformat())
+        self.assertEqual(body["entries"], [
+            {"userId": self.ana.id, "displayName": "ana", "points": 36, "workouts": 1, "rank": 1},
+        ])
+
+    def test_current_user_is_empty_when_logged_out(self):
+        self.assertIsNone(self.client.get("/leaderboard/weekly/").json()["currentUserId"])
+
+    def test_current_user_is_set_when_logged_in(self):
+        self.client.force_login(self.ana)
+        self.assertEqual(self.client.get("/leaderboard/weekly/").json()["currentUserId"], self.ana.id)
+
+    def test_a_logged_in_user_with_no_workouts_still_appears_with_zero_points(self):
+        ben = get_user_model().objects.create_user("ben", password="pw-for-tests")
+        self.client.force_login(ben)
+        entries = self.client.get("/leaderboard/weekly/").json()["entries"]
+        self.assertIn(
+            {"userId": ben.id, "displayName": "ben", "points": 0, "workouts": 0, "rank": None}, entries
+        )
