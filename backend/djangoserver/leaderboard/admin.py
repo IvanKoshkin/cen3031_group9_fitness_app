@@ -3,7 +3,14 @@ from django.contrib import admin
 from .models import Exercise, WorkoutLog
 # Register your models here.
 
-admin.site.register(Exercise)
+@admin.register(Exercise)
+class ExerciseAdmin(admin.ModelAdmin):
+    """Lets admins search exercises by name and filter them by category."""
+
+    list_display = ("exercise_name", "category")
+    list_filter = ("category",)
+    search_fields = ("exercise_name",)
+    ordering = ("exercise_name",)
 
 
 @admin.register(WorkoutLog)
