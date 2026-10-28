@@ -26,7 +26,7 @@ def start_of_current_week(today=None):
 
 
 class Exercise(models.Model):
-    exercise_name = models.CharField(max_length = 50) #arbitrary max length
+    exercise_name = models.CharField(max_length = 100) # some exercise names are 58 chars
     points = models.IntegerField(default = 0)
     # Category drives scoring: points come from category + duration + intensity,
     # not from a flat value stored on the exercise.
