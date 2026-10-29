@@ -13,7 +13,7 @@ def index(request):
 
 # all exercises sorted by name
 def exercise_list(request):
-    exercises = Exercise.objects.order_by("exercise_name").values("id", "exercise_name", "points")
+    exercises = Exercise.objects.order_by("exercise_name").values("id", "exercise_name", "category")
     return JsonResponse({"exercises": list(exercises)})
 
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { colors, fontSize, radius, spacing } from "@/constants/theme";
 import {
   View,
   Text,
@@ -59,7 +60,7 @@ export default function ItemList() {
             renderItem = {({item}) => (
                 <View style = {styles.card}>
                     <Text style = {styles.title}>{item.exercise_name}</Text>
-                    <Text style = {styles.score}>{item.points}</Text>
+                    <Text style = {styles.category}>{item.category}</Text>
                 </View>
             )}
         />
@@ -67,22 +68,33 @@ export default function ItemList() {
 }
 
 
+
+
 //stylesheet generated
 const styles = StyleSheet.create({
-  center: { flex: 1, marginTop: 100, textAlign: "center" },
-  error: { color: "red" },
-  card: {
-    backgroundColor: "#fff",
-    padding: 16,
-    marginHorizontal: 12,
-    marginVertical: 6,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+  // Screen wrapper (use on SafeAreaView, like `safe` in the leaderboard)
+  safe: { flex: 1, backgroundColor: colors.background },
+  // Replaces your old `center`: for loading / empty / error states
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.lg,
+    gap: spacing.sm,
   },
-  title: { fontSize: 18, fontWeight: "bold" },
-  desc: { color: "#555", marginTop: 4 },
-  score: { marginTop: 8, fontWeight: "600" },
+  // Padding for the FlatList's contentContainerStyle (replaces the cards' marginHorizontal)
+  list: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm },
+
+  error: { color: colors.danger, fontWeight: "600", textAlign: "center" },
+
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  title: { color: colors.text, fontSize: fontSize.large, fontWeight: "800" },
+  desc: { color: colors.textMuted, fontSize: fontSize.body, marginTop: spacing.xs },
+  category: { color: colors.accent, fontSize: fontSize.body, fontWeight: "700", marginTop: spacing.sm },
 });

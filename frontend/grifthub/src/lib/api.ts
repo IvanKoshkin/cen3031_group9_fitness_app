@@ -8,7 +8,7 @@
 
 import { LEADERBOARD_MOCK } from "@/data/mockLeaderboard";
 
-export const USE_MOCK = true;
+export const USE_MOCK = false;
 
 // Django's dev server. On a phone running Expo Go, "localhost" means the
 // phone itself, so replace this with your computer's IP (e.g. http://192.168.1.20:8000).
@@ -83,5 +83,5 @@ export async function getLeaderboard(): Promise<Leaderboard> {
     await wait(700);
     return LEADERBOARD_MOCK;
   }
-  return request("/api/leaderboard/");
+  return request("/leaderboard/weekly/");
 }
