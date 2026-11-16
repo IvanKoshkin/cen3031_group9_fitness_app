@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
@@ -69,10 +70,12 @@ export default function LeaderboardScreen() {
     }
   }, []);
 
-  // useEffect with [] runs once, when the screen first appears.
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Refetch whenever the tab becomes active, including after logging a workout.
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   // ----- loading / error states -----
   if (loading) {
