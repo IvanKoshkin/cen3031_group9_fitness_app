@@ -6,7 +6,6 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.contrib.auth.models import Group, Permission
 
 # our proposal says sign-up is for UF students, so only UF emails can register
 ALLOWED_EMAIL_DOMAIN = "ufl.edu"
@@ -60,8 +59,6 @@ def register(request):
 
     user.set_password(password)
     user.save()
-    members, _ = Group.objects.get_or_create(name="Members")
-    user.groups.add(members)
     login(request, user)
     return JsonResponse({"userId": user.id}, status=201)
 
