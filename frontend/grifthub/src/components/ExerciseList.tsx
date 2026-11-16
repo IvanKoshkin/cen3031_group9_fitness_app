@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { colors, fontSize, radius, spacing } from "@/constants/theme";
 import {
   View,
@@ -7,29 +7,38 @@ import {
   ActivityIndicator,
   StyleSheet,
   RefreshControl,
-  Platform,
 } from "react-native";
 
 const HOST = '127.0.0.1';
 const API_URL = `http://${HOST}:8000/leaderboard/exercises/`;
 
+export type Exercise = {
+  id: number;
+  exercise_name: string;
+  category: string;
+};
+
+export async function fetchExercises(): Promise<Exercise[]> {
+  const res = await fetch(API_URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = (await res.json()) as { exercises?: Exercise[] };
+  return data.exercises ?? [];
+}
+
 export default function ItemList() {
-    const [items, setItems] = useState([]);
+    const [items, setItems] = useState<Exercise[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
 
 
     const loadItems = useCallback(async () => {
         try {
             setError(null);
-            const res = await fetch(API_URL);
-            if(!res.ok) throw new Error('HTTP ${res.status}');
-            const data = await res.json();
-            setItems(data.exercises ?? []);
+            setItems(await fetchExercises());
             
         } catch (e) {
-            setError(e.message);
+            setError(e instanceof Error ? e.message : "Unable to load exercises.");
         } finally {
             setLoading(false);
             setRefreshing(false);
