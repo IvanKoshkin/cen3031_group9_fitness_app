@@ -13,9 +13,7 @@ export default function Home() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <Text style={styles.title}>Dashboard</Text>
-        <ItemList />
-        <Text style={styles.body}>Coming soon: your points, rank, and a Log Workout button.</Text>
-        
+        <ItemList />        
       </View>
     </SafeAreaView>
   );
