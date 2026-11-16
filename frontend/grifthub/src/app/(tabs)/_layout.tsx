@@ -32,6 +32,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="trophy" color={color} size={size} />,
         }}
       />
+      <Tabs.Screen
+        name="log-workout"
+        options={{
+          title: "Log workout",
+          tabBarIcon: ({ color, size }) => <Ionicons name="add-circle" color={color} size={size} />,
+        }}
+      />
     </Tabs>
   );
 }

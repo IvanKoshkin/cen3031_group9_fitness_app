@@ -8,21 +8,10 @@ import {
   StyleSheet,
   RefreshControl,
 } from "react-native";
-
-const HOST = '127.0.0.1';
-const API_URL = `http://${HOST}:8000/leaderboard/exercises/`;
-
-export type Exercise = {
-  id: number;
-  exercise_name: string;
-  category: string;
-};
+import { getExercises, type Exercise } from "@/lib/api";
 
 export async function fetchExercises(): Promise<Exercise[]> {
-  const res = await fetch(API_URL);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = (await res.json()) as { exercises?: Exercise[] };
-  return data.exercises ?? [];
+  return getExercises();
 }
 
 export default function ItemList() {

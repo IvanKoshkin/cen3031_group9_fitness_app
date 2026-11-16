@@ -36,6 +36,25 @@ export type SignUpInput = {
   password: string;
 };
 
+export type Exercise = {
+  id: number;
+  exercise_name: string;
+  category: string;
+};
+
+export type WorkoutLogInput = {
+  exerciseId: number;
+  minutes: number;
+  intensity: "light" | "moderate" | "vigorous";
+};
+
+export type WorkoutLog = WorkoutLogInput & {
+  id: number;
+  performedOn: string;
+  pointsAwarded: number;
+  flagged: boolean;
+};
+
 // ---------- Helpers ----------
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -43,6 +62,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
+    credentials: "include",
     headers: { "Content-Type": "application/json", ...options.headers },
   });
   const body = await response.json().catch(() => ({}));
@@ -84,4 +104,16 @@ export async function getLeaderboard(): Promise<Leaderboard> {
     return LEADERBOARD_MOCK;
   }
   return request("/leaderboard/weekly/");
+}
+
+export async function getExercises(): Promise<Exercise[]> {
+  const data = await request<{ exercises: Exercise[] }>("/leaderboard/exercises/");
+  return data.exercises;
+}
+
+export async function createWorkoutLog(input: WorkoutLogInput): Promise<WorkoutLog> {
+  return request("/leaderboard/logs/", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }

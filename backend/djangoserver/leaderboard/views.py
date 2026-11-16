@@ -2,8 +2,13 @@ from django.shortcuts import render, get_object_or_404
 
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
-from .models import Exercise, start_of_current_week
+import json
+from datetime import date
+
+from .models import Exercise, WorkoutLog, start_of_current_week
 from .standings import weekly_standings
 
 
@@ -49,3 +54,64 @@ def weekly_leaderboard(request):
         "currentUserId": request.user.id if request.user.is_authenticated else None,
         "entries": entries,
     })
+
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+def logs(request):
+    """Create a workout log and return the score calculated by the server."""
+    if request.method == "OPTIONS":
+        return JsonResponse({})
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "You must be logged in to log a workout."}, status=401)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"detail": "Send the workout as JSON."}, status=400)
+
+    if not isinstance(data, dict):
+        return JsonResponse({"detail": "Send the workout as a JSON object."}, status=400)
+
+    exercise_id = data.get("exerciseId", data.get("exercise_id"))
+    if exercise_id is None:
+        return JsonResponse({"detail": "exerciseId is required."}, status=400)
+    try:
+        exercise = Exercise.objects.get(pk=exercise_id)
+    except (Exercise.DoesNotExist, ValueError, TypeError):
+        return JsonResponse({"detail": "That exercise does not exist."}, status=400)
+
+    performed_on = data.get("performedOn", data.get("performed_on"))
+    if performed_on is None:
+        performed_on = timezone.localdate()
+    else:
+        try:
+            performed_on = date.fromisoformat(performed_on)
+        except (TypeError, ValueError):
+            return JsonResponse({"detail": "performedOn must be an ISO date (YYYY-MM-DD)."}, status=400)
+
+    minutes = data.get("minutes")
+    intensity = data.get("intensity", "moderate")
+    try:
+        workout = WorkoutLog.objects.create(
+            user=request.user,
+            exercise=exercise,
+            minutes=minutes,
+            intensity=intensity,
+            performed_on=performed_on,
+        )
+    except ValueError as error:
+        return JsonResponse({"detail": str(error)}, status=400)
+
+    return JsonResponse(
+        {
+            "id": workout.id,
+            "exerciseId": workout.exercise_id,
+            "minutes": workout.minutes,
+            "intensity": workout.intensity,
+            "performedOn": workout.performed_on.isoformat(),
+            "pointsAwarded": workout.points_awarded,
+            "flagged": workout.flagged,
+        },
+        status=201,
+    )
