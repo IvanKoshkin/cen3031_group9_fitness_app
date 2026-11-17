@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -102,6 +103,9 @@ def logs(request):
         )
     except ValueError as error:
         return JsonResponse({"detail": str(error)}, status=400)
+    # the model rejects dates outside the current week
+    except ValidationError as error:
+        return JsonResponse({"detail": " ".join(error.messages)}, status=400)
 
     return JsonResponse(
         {
