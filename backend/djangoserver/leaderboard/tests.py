@@ -249,3 +249,43 @@ class WeeklyLeaderboardEndpointTests(TestCase):
         self.assertIn(
             {"userId": ben.id, "displayName": "ben", "points": 0, "workouts": 0, "rank": None}, entries
         )
+
+
+class LogWorkoutEndpointTests(TestCase):
+    def setUp(self):
+        self.ana = get_user_model().objects.create_user("ana", password="pw-for-tests")
+        self.run = Exercise.objects.create(exercise_name="Running", category="cardio")
+        self.today = timezone.localdate()
+
+    def log(self, **changes):
+        body = {"exerciseId": self.run.id, "minutes": 30, **changes}
+        return self.client.post("/leaderboard/logs/", body, content_type="application/json")
+
+    def test_logging_a_workout_returns_the_server_score(self):
+        self.client.force_login(self.ana)
+        response = self.log()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["pointsAwarded"], 36)
+        self.assertEqual(WorkoutLog.objects.get().user, self.ana)
+
+    def test_you_have_to_be_logged_in(self):
+        self.assertEqual(self.log().status_code, 401)
+        self.assertEqual(WorkoutLog.objects.count(), 0)
+
+    def test_an_exercise_that_doesnt_exist_is_rejected(self):
+        self.client.force_login(self.ana)
+        self.assertEqual(self.log(exerciseId=9999).status_code, 400)
+
+    def test_too_few_minutes_is_rejected(self):
+        self.client.force_login(self.ana)
+        self.assertEqual(self.log(minutes=2).status_code, 400)
+
+    def test_a_date_outside_this_week_gets_a_400_not_a_crash(self):
+        self.client.force_login(self.ana)
+        last_week = start_of_current_week(self.today) - timedelta(days=1)
+        for day in [last_week, self.today + timedelta(days=1)]:
+            with self.subTest(day=day):
+                response = self.log(performedOn=day.isoformat())
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("detail", response.json())
+        self.assertEqual(WorkoutLog.objects.count(), 0)
